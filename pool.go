@@ -87,7 +87,7 @@ func (p *Pool) isShutdown() error {
 }
 
 // Schedule push a task on queue.
-func (p *Pool) Schedule(task Task, ctx context.Context) error {
+func (p *Pool) Schedule(ctx context.Context, task Task) error {
 	if err := p.isShutdown(); err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (p *Pool) Schedule(task Task, ctx context.Context) error {
 }
 
 // ScheduleWithTimeout try to push a task on queue, if timeout, return false.
-func (p *Pool) ScheduleWithTimeout(timeout time.Duration, task Task, ctx context.Context) error {
+func (p *Pool) ScheduleWithTimeout(ctx context.Context, timeout time.Duration, task Task) error {
 	if err := p.isShutdown(); err != nil {
 		return err
 	}

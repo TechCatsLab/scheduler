@@ -24,11 +24,11 @@ func TestScheduler(t *testing.T) {
 
 	wg.Add(pSize)
 	for i := 0; i < pSize; i++ {
-		p.Schedule(TaskFunc(func(ctx context.Context) error {
+		p.Schedule(context.Background(), TaskFunc(func(ctx context.Context) error {
 			counter++
 			wg.Done()
 			return nil
-		}), context.Background())
+		}))
 	}
 
 	wg.Wait()
@@ -54,10 +54,10 @@ func TestScheduleWithTimeout(t *testing.T) {
 
 	wg.Add(pSize + wSize)
 	for i := 0; i < wSize+pSize; i++ {
-		p.Schedule(TaskFunc(f), context.Background())
+		p.Schedule(context.Background(), TaskFunc(f))
 	}
 
-	err := p.ScheduleWithTimeout(1*time.Second, TaskFunc(f), context.Background())
+	err := p.ScheduleWithTimeout(context.Background(), 1*time.Second, TaskFunc(f))
 	if err == nil {
 		t.Error("scheduler succeed")
 	}
@@ -78,11 +78,11 @@ func TestPoolStop(t *testing.T) {
 		return nil
 	}
 
-	if err := p.Schedule(TaskFunc(f), context.Background()); err == nil {
+	if err := p.Schedule(context.Background(), TaskFunc(f)); err == nil {
 		t.Error("Schedule succeed, failure expected")
 	}
 
-	if err := p.ScheduleWithTimeout(1*time.Second, TaskFunc(f), context.Background()); err == nil {
+	if err := p.ScheduleWithTimeout(context.Background(), 1*time.Second, TaskFunc(f)); err == nil {
 		t.Error("ScheduleWithTimeout succeed, failure expected")
 	}
 
@@ -96,12 +96,12 @@ func TestTaskCrash(t *testing.T) {
 
 	wg.Add(pSize + wSize)
 	for i := 0; i < pSize+wSize; i++ {
-		p.Schedule(TaskFunc(func(ctx context.Context) error {
+		p.Schedule(context.Background(), TaskFunc(func(ctx context.Context) error {
 			counter++
 			wg.Done()
 			panic("panic")
 			return nil
-		}), context.Background())
+		}))
 	}
 
 	wg.Wait()
@@ -127,12 +127,12 @@ func TestCancel(t *testing.T) {
 	}
 
 	for i := 0; i < pSize; i++ {
-		p.Schedule(TaskFunc(f), context.Background())
+		p.Schedule(context.Background(), TaskFunc(f))
 	}
 
-	c, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 
-	p.Schedule(TaskFunc(func(ctx context.Context) error {
+	p.Schedule(ctx, TaskFunc(func(ctx context.Context) error {
 		select {
 		case <-time.After(1 * time.Second):
 			counter++
@@ -140,7 +140,7 @@ func TestCancel(t *testing.T) {
 		}
 		wg.Done()
 		return nil
-	}), c)
+	}))
 
 	wg.Done()
 
