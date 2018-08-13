@@ -1,13 +1,13 @@
 /*
  * Revision History:
  *     Initial: 2018/07/11        Tong Yuehong
+ *     Modify:  2018/08/08        Li Zebang
  */
 
 package scheduler
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 )
@@ -20,18 +20,15 @@ const (
 func TestScheduler(t *testing.T) {
 	counter := 0
 	p := New(pSize, wSize)
-	wg := &sync.WaitGroup{}
 
-	wg.Add(pSize)
 	for i := 0; i < pSize; i++ {
 		p.Schedule(context.Background(), TaskFunc(func(ctx context.Context) error {
 			counter++
-			wg.Done()
 			return nil
 		}))
 	}
 
-	wg.Wait()
+	p.Wait()
 
 	p.Stop()
 
@@ -43,16 +40,13 @@ func TestScheduler(t *testing.T) {
 func TestScheduleWithTimeout(t *testing.T) {
 	counter := 0
 	p := New(pSize, wSize)
-	wg := &sync.WaitGroup{}
 
 	f := func(ctx context.Context) error {
 		counter++
 		time.Sleep(2 * time.Second)
-		wg.Done()
 		return nil
 	}
 
-	wg.Add(pSize + wSize)
 	for i := 0; i < wSize+pSize; i++ {
 		p.Schedule(context.Background(), TaskFunc(f))
 	}
@@ -62,7 +56,7 @@ func TestScheduleWithTimeout(t *testing.T) {
 		t.Error("scheduler succeed")
 	}
 
-	wg.Wait()
+	p.Wait()
 
 	p.Stop()
 }
@@ -71,10 +65,7 @@ func TestPoolStop(t *testing.T) {
 	p := New(pSize, wSize)
 	p.Stop()
 
-	wg := sync.WaitGroup{}
-	wg.Add(2)
 	f := func(ctx context.Context) error {
-		wg.Done()
 		return nil
 	}
 
@@ -86,25 +77,22 @@ func TestPoolStop(t *testing.T) {
 		t.Error("ScheduleWithTimeout succeed, failure expected")
 	}
 
-	wg.Done()
+	p.Wait()
 }
 
 func TestTaskCrash(t *testing.T) {
 	counter := 0
 	p := New(pSize, wSize)
-	wg := &sync.WaitGroup{}
 
-	wg.Add(pSize + wSize)
 	for i := 0; i < pSize+wSize; i++ {
 		p.Schedule(context.Background(), TaskFunc(func(ctx context.Context) error {
 			counter++
-			wg.Done()
 			panic("panic")
 			return nil
 		}))
 	}
 
-	wg.Wait()
+	p.Wait()
 
 	p.Stop()
 
@@ -116,13 +104,9 @@ func TestTaskCrash(t *testing.T) {
 func TestCancel(t *testing.T) {
 	counter := 0
 	p := New(pSize, wSize)
-	wg := &sync.WaitGroup{}
-
-	wg.Add(pSize + 1)
 
 	f := func(ctx context.Context) error {
 		time.Sleep(3 * time.Second)
-		wg.Done()
 		return nil
 	}
 
@@ -138,13 +122,10 @@ func TestCancel(t *testing.T) {
 			counter++
 		case <-ctx.Done():
 		}
-		wg.Done()
 		return nil
 	}))
 
-	wg.Done()
-
-	wg.Wait()
+	p.Wait()
 
 	p.Stop()
 

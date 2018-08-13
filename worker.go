@@ -1,6 +1,7 @@
 /*
  * Revision History:
  *     Initial: 2018/07/10        Tong Yuehong
+ *     Modify:  2018/08/08        Li Zebang
  */
 
 package scheduler
@@ -29,6 +30,7 @@ func (w *Worker) work() {
 				return
 			}
 		}()
+		defer w.pool.wg.Done()
 
 		t := task.(*taskWrapper)
 

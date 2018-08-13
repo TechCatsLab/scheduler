@@ -1,6 +1,7 @@
 /*
  * Revision History:
  *     Initial: 2018/07/10        Tong Yuehong
+ *     Modify:  2018/08/08        Li Zebang
  */
 
 package scheduler
@@ -35,6 +36,7 @@ type Pool struct {
 	workers  chan chan Task
 	shutdown chan struct{}
 	stop     sync.Once
+	wg       sync.WaitGroup
 }
 
 // New a goroutine pool.
@@ -92,6 +94,7 @@ func (p *Pool) Schedule(ctx context.Context, task Task) error {
 		return err
 	}
 
+	p.wg.Add(1)
 	t := &taskWrapper{task, ctx}
 	p.queue <- t
 	return nil
@@ -123,4 +126,8 @@ func (p *Pool) Stop() {
 
 func (p *Pool) stopGracefully() {
 	// todo
+}
+
+func (p *Pool) Wait() {
+	p.wg.Wait()
 }
